@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Task Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <h1>Task Tracker</h1>
+      <p class="tagline">Add tasks and keep track of what matters.</p>
+    </header>
+
+    <section class="add-task">
+      <h2>New task</h2>
+      <form id="task-form">
+        <input type="text" id="title" name="title" placeholder="Task title" required autocomplete="off">
+        <textarea id="description" name="description" placeholder="Description (optional)" rows="2"></textarea>
+        <button type="submit">Add task</button>
+      </form>
+      <div id="form-message" class="message" aria-live="polite"></div>
+    </section>
+
+    <section class="task-list">
+      <h2>Your tasks</h2>
+      <div id="loading" class="loading">Loading tasks…</div>
+      <ul id="tasks" class="tasks"></ul>
+      <div id="empty" class="empty" hidden>No tasks yet. Add one above.</div>
+      <div id="error" class="error" hidden></div>
+    </section>
+  </div>
+  <script src="/app.js"></script>
+</body>
+</html>
