@@ -200,9 +200,7 @@ async function start() {
   }
 }
 
-// Export for tests; only start server when run directly
+// Export for tests; only start server when run directly (not under Jest)
 module.exports = { app, setPool: (p) => { pool = p; }, loadSchema, buildCreateTableStatements };
 /* istanbul ignore if */
-if (require.main === module) start();
-
-//start();
+if (require.main === module && !process.env.JEST_WORKER_ID) start();
