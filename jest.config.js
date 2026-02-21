@@ -1,9 +1,8 @@
 /** @type {import('jest').Config} */
 module.exports = {
   testEnvironment: 'node',
-  setupFiles: ['./jest.setup.js'],
   coverageDirectory: 'coverage',
-  collectCoverageFrom: ['index.js'],
+  collectCoverageFrom: ['app.js', 'schema-utils.js'],
   coveragePathIgnorePatterns: ['/node_modules/'],
   coverageThreshold: {
     global: {

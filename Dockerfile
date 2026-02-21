@@ -8,7 +8,7 @@ COPY package.json ./
 
 RUN npm install --omit=dev
 
-COPY index.js schema.json ./
+COPY index.js app.js schema.json schema-utils.js ./
 COPY public ./public
 
 EXPOSE 3000
