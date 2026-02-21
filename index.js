@@ -25,6 +25,7 @@ const dbConfig = {
   database: process.env.PGDATABASE || process.env.DB_NAME,
 };
 
+/* istanbul ignore next */
 function validateDbConfig() {
   const required = ['user', 'password', 'database'];
   const missing = required.filter((key) => !dbConfig[key]);
@@ -38,6 +39,7 @@ function validateDbConfig() {
 
 let pool;
 
+/* istanbul ignore next */
 async function connectDatabase() {
   validateDbConfig();
   pool = new Pool({
@@ -90,6 +92,7 @@ function buildCreateTableStatements(schema) {
   return statements;
 }
 
+/* istanbul ignore next */
 async function runSchemaSetup() {
   const schema = loadSchema();
   const client = await pool.connect();
@@ -182,6 +185,7 @@ app.get('/health', (req, res) => {
 // ---------------------------------------------------------------------------
 const PORT = parseInt(process.env.PORT || '3000', 10);
 
+/* istanbul ignore next */
 async function start() {
   try {
     await connectDatabase();
@@ -196,4 +200,9 @@ async function start() {
   }
 }
 
-start();
+// Export for tests; only start server when run directly
+module.exports = { app, setPool: (p) => { pool = p; }, loadSchema, buildCreateTableStatements };
+/* istanbul ignore if */
+if (require.main === module) start();
+
+//start();

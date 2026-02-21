@@ -7,3 +7,7 @@ npm-debug.log
 README.md
 .md
 .DS_Store
+__tests__
+coverage
+jest.config.js
+.test.js
