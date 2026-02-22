@@ -1,27 +1,24 @@
-const fs = require('fs');
-const path = require('path');
+const { loadSchema, buildCreateTableStatements } = require('../schema-utils');
 
-function loadSchema() {
-  const schemaPath = path.join(__dirname, 'schema.json');
-  if (!fs.existsSync(schemaPath)) {
-    throw new Error(`Schema file not found: ${schemaPath}`);
-  }
-  const raw = fs.readFileSync(schemaPath, 'utf8');
-  return JSON.parse(raw);
-}
+describe('schema-utils', () => {
+  it('can load schema.json', () => {
+    const schema = loadSchema();
+    expect(schema).toHaveProperty('tables');
+  });
 
-function buildCreateTableStatements(schema) {
-  const statements = [];
-  for (const table of schema.tables || []) {
-    const ifNotExists = table.ifNotExists ? ' IF NOT EXISTS' : '';
-    const cols = (table.columns || [])
-      .map((c) => `"${c.name}" ${c.definition}`)
-      .join(', ');
-    statements.push(
-      `CREATE TABLE${ifNotExists} "${table.name}" (${cols});`
-    );
-  }
-  return statements;
-}
-
-module.exports = { loadSchema, buildCreateTableStatements };
+  it('builds SQL create statements', () => {
+    const schema = {
+      tables: [
+        {
+          name: 'foo',
+          ifNotExists: true,
+          columns: [{ name: 'id', definition: 'SERIAL PRIMARY KEY' }],
+        },
+      ],
+    };
+    const stmts = buildCreateTableStatements(schema);
+    expect(stmts).toEqual([
+      'CREATE TABLE IF NOT EXISTS "foo" ("id" SERIAL PRIMARY KEY);',
+    ]);
+  });
+});
