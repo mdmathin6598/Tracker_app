@@ -1,24 +1,24 @@
-const { loadSchema, buildCreateTableStatements } = require('../schema-utils');
+const fs = require('fs');
+const path = require('path');
 
-describe('schema-utils', () => {
-  it('can load schema.json', () => {
-    const schema = loadSchema();
-    expect(schema).toHaveProperty('tables');
-  });
+function loadSchema() {
+  const filePath = path.join(__dirname, 'schema.json');
+  const raw = fs.readFileSync(filePath, 'utf-8');
+  return JSON.parse(raw);
+}
 
-  it('builds SQL create statements', () => {
-    const schema = {
-      tables: [
-        {
-          name: 'foo',
-          ifNotExists: true,
-          columns: [{ name: 'id', definition: 'SERIAL PRIMARY KEY' }],
-        },
-      ],
-    };
-    const stmts = buildCreateTableStatements(schema);
-    expect(stmts).toEqual([
-      'CREATE TABLE IF NOT EXISTS "foo" ("id" SERIAL PRIMARY KEY);',
-    ]);
+function buildCreateTableStatements(schema) {
+  return schema.tables.map((table) => {
+    const columns = table.columns
+      .map((col) => `"${col.name}" ${col.definition}`)
+      .join(', ');
+
+    const ifNotExists = table.ifNotExists ? 'IF NOT EXISTS ' : '';
+    return `CREATE TABLE ${ifNotExists}"${table.name}" (${columns});`;
   });
-});
+}
+
+module.exports = {
+  loadSchema,
+  buildCreateTableStatements,
+};
