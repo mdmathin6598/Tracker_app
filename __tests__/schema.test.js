@@ -1,4 +1,4 @@
-const { loadSchema, buildCreateTableStatements } = require('../index');
+const { loadSchema, buildCreateTableStatements } = require('../schema-utils');
 
 describe('loadSchema', () => {
   it('loads and parses schema.json', () => {
