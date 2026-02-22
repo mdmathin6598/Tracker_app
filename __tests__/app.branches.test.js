@@ -2,85 +2,100 @@ const request = require('supertest');
 const { app, setPool } = require('../app');
 
 describe('App branch coverage tests', () => {
-  // Helper: mock a pool that throws errors on query
-  const createErrorPool = (errorMessage = 'DB fail') => ({
-    connect: jest.fn().mockResolvedValue({
-      query: jest.fn().mockRejectedValue(new Error(errorMessage)),
-      release: jest.fn(),
-    }),
+  let mockPool;
+
+  beforeEach(() => {
+    mockPool = {
+      query: jest.fn(),
+      connect: jest.fn(),
+      end: jest.fn(),
+    };
+    setPool(mockPool);
   });
 
   afterEach(() => {
-    jest.resetAllMocks();
-    process.env.NODE_ENV = 'test'; // reset NODE_ENV
+    jest.clearAllMocks();
   });
 
   // -----------------------------
-  // GET /tasks error branch
-  // -----------------------------
-  it('GET /tasks returns 500 on DB error', async () => {
-    setPool(createErrorPool());
+  it('GET /tasks returns empty array when no tasks', async () => {
+    mockPool.query.mockResolvedValue({ rows: [] });
+
     const res = await request(app).get('/tasks');
-
-    expect(res.status).toBe(500);
-    expect(res.body).toHaveProperty('error');
-    expect(res.body.error).toBe('Internal server error');
+    expect(res.status).toBe(200);
+    expect(res.body.tasks).toEqual([]);
   });
 
-  // -----------------------------
-  // POST /tasks missing title branch
-  // -----------------------------
-  it('POST /tasks returns 400 when title is missing', async () => {
-    const res = await request(app)
-      .post('/tasks')
-      .send({ description: 'No title provided' });
+  it('GET /tasks returns tasks array', async () => {
+    const mockTasks = [{ id: 1, title: 'Task 1', description: 'Desc', status: 'pending' }];
+    mockPool.query.mockResolvedValue({ rows: mockTasks });
 
-    expect(res.status).toBe(400);
-    expect(res.body).toHaveProperty('error');
+    const res = await request(app).get('/tasks');
+    expect(res.status).toBe(200);
+    expect(res.body.tasks).toEqual(mockTasks);
   });
 
-  // -----------------------------
-  // POST /tasks DB error branch
-  // -----------------------------
-  it('POST /tasks returns 500 on DB error', async () => {
-    setPool(createErrorPool());
-    const res = await request(app)
-      .post('/tasks')
-      .send({ title: 'Task causing DB error' });
-
-    expect(res.status).toBe(500);
-    expect(res.body).toHaveProperty('error');
-    expect(res.body.error).toBe('Internal server error');
-  });
-
-  // -----------------------------
-  // GET /tasks shows detailed error in development
-  // -----------------------------
   it('GET /tasks shows detailed error in development', async () => {
     process.env.NODE_ENV = 'development';
-    setPool(createErrorPool('DB fail'));
+    mockPool.query.mockRejectedValue(new Error('DB fail'));
 
     const res = await request(app).get('/tasks');
     expect(res.status).toBe(500);
-    expect(res.body).toHaveProperty('error');
-    expect(res.body).toHaveProperty('message');
+    expect(res.body.error).toBe('Internal server error');
     expect(res.body.message).toBe('DB fail');
   });
 
+  it('GET /tasks hides error message in production', async () => {
+    process.env.NODE_ENV = 'production';
+    mockPool.query.mockRejectedValue(new Error('DB fail'));
+
+    const res = await request(app).get('/tasks');
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('Internal server error');
+    expect(res.body.message).toBeUndefined();
+  });
+
   // -----------------------------
-  // POST /tasks shows detailed error in development
-  // -----------------------------
-  it('POST /tasks shows detailed error in development', async () => {
-    process.env.NODE_ENV = 'development';
-    setPool(createErrorPool('Insert failed'));
+  it('POST /tasks creates a task successfully', async () => {
+    const newTask = { id: 1, title: 'Task 1', description: 'Desc', status: 'pending' };
+    mockPool.query.mockResolvedValue({ rows: [newTask] });
 
     const res = await request(app)
       .post('/tasks')
-      .send({ title: 'Test task', description: 'desc' });
+      .send({ title: 'Task 1', description: 'Desc' });
+    expect(res.status).toBe(201);
+    expect(res.body.title).toBe(newTask.title);
+  });
 
+  it('POST /tasks returns 400 when title is missing', async () => {
+    const res = await request(app)
+      .post('/tasks')
+      .send({ description: 'Desc' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('Title is required');
+  });
+
+  it('POST /tasks shows detailed error in development', async () => {
+    process.env.NODE_ENV = 'development';
+    mockPool.query.mockRejectedValue(new Error('Insert failed'));
+
+    const res = await request(app)
+      .post('/tasks')
+      .send({ title: 'New task', description: 'desc' });
     expect(res.status).toBe(500);
-    expect(res.body).toHaveProperty('error');
-    expect(res.body).toHaveProperty('message');
+    expect(res.body.error).toBe('Internal server error');
     expect(res.body.message).toBe('Insert failed');
+  });
+
+  it('POST /tasks hides error message in production', async () => {
+    process.env.NODE_ENV = 'production';
+    mockPool.query.mockRejectedValue(new Error('Insert failed'));
+
+    const res = await request(app)
+      .post('/tasks')
+      .send({ title: 'New task', description: 'desc' });
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('Internal server error');
+    expect(res.body.message).toBeUndefined();
   });
 });
