@@ -72,7 +72,7 @@ describe('App branch coverage tests', () => {
       .post('/tasks')
       .send({ description: 'Desc' });
     expect(res.status).toBe(400);
-    expect(res.body.error).toBe('Title is required');
+    expect(res.body.error).toBe('Validation failed');
   });
 
   it('POST /tasks shows detailed error in development', async () => {
